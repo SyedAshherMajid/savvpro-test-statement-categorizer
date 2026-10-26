@@ -10,7 +10,7 @@ Sub-agent token counts come from each agent's completion notice. Main-session (O
 | devops-builder | Haiku 5.5 | Docker, compose, Makefile, pre-commit, CI/security/release workflows, Dependabot, agent defs | 113,326 | 5.8 min | done |
 | fixture-builder | Haiku 5.5 | sample generator, 6 fake statements + labels, coverage script | 155,831 | 6.8 min | done; 53/66 catalog IDs, gaps covered by unit tests |
 | backend-builder | Sonnet 5.5 | ingest, normalize, core, db, services, API, tests | | | |
-| frontend-builder | Sonnet 5.5 | Next.js UI per 07/07a | | | |
+| frontend-builder | Sonnet 5.5 | Next.js UI per 07/07a | 133,137 | 26.4 min | done; lint/types/21 tests/build green |
 
 Decisions:
 - Four builders ran in parallel in disjoint directories of one tree instead of separate worktrees. With contracts frozen first there was no merge risk, and it saved worktree setup and merge time.

@@ -5,3 +5,5 @@
 samples/**/*crlf* -text
 samples/**/*cp1252* -text
 samples/**/*bom* -text
+frontend/public/samples/*crlf* -text
+frontend/public/samples/*bom* -text
