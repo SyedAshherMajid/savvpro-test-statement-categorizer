@@ -9,7 +9,7 @@ setup:
 	uvx pre-commit install
 
 dev:
-	@trap 'kill 0' EXIT; (cd $(BACKEND) && uv run uvicorn app.main:app --reload --port 8000) & (cd $(FRONTEND) && npm run dev); wait
+	@trap 'kill 0' EXIT; (cd $(BACKEND) && uv run uvicorn app.main:create_app --factory --reload --port 8000) & (cd $(FRONTEND) && npm run dev); wait
 
 lint:
 	cd $(BACKEND) && uv run ruff check . && uv run ruff format --check .

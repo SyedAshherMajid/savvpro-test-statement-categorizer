@@ -32,7 +32,7 @@ cd backend
 uv sync
 uv run alembic upgrade head          # creates data/app.db
 export APP_ENV=development            # enables the /docs API explorer (default is production)
-uv run uvicorn app.main:app --reload # http://localhost:8000  (API docs at /docs)
+uv run uvicorn app.main:create_app --factory --reload # http://localhost:8000  (API docs at /docs)
 
 # frontend (terminal 2)
 cd frontend
