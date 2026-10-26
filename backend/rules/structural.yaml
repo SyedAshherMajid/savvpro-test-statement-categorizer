@@ -39,7 +39,7 @@
   account_types: [checking]
 
 - id: st.nsf_return
-  pattern: '\b(RETURNED ITEM|RETURN(ED)? DEPOSIT(ED)? ITEM|DEPOSITED ITEM RETURNED|CHARGEBACK)\b(?! (FEE|CHARGE)\b)'
+  pattern: '^(?!.*\b(FEE|CHARGE)\b).*\b(RETURNED ITEM|RETURN(ED)? DEPOSIT(ED)? ITEM|DEPOSITED ITEM RETURNED|CHARGEBACK)\b'
   category: RENT
   score: 0.92
   directions: [outflow]
@@ -47,7 +47,7 @@
   is_refund: true
 
 - id: st.bank_fee
-  pattern: '\b(SERVICE|MAINTENANCE|MONTHLY|NSF|OVERDRAFT|WIRE|ATM|FOREIGN TRANSACTION|RETURNED ITEM) (CHARGE|FEE)\b'
+  pattern: '\b(SERVICE|MAINTENANCE|MONTHLY|NSF|OVERDRAFT|WIRE|ATM|FOREIGN (TRANSACTION|TXN)|RETURNED ITEM) (CHARGE|FEE)\b'
   category: OTHER_EXPENSE
   score: 0.97
   directions: [outflow]

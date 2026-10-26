@@ -17,8 +17,9 @@
 - {id: kw.internet, pattern: '\b(INTERNET|BROADBAND)\b', category: UTILITIES, weight: 0.80, directions: [outflow]}
 - {id: kw.legal, pattern: '\b(ATTORNEY|LAW (OFFICE|GROUP|FIRM)|LEGAL|EVICTION)\b', category: LEGAL_PROFESSIONAL, weight: 0.90, directions: [outflow]}
 - {id: kw.accounting, pattern: '\b(CPA|CPAS|ACCOUNTING|BOOKKEEPING|TAX PREP(ARATION)?)\b', category: LEGAL_PROFESSIONAL, weight: 0.90, directions: [outflow]}
-- {id: kw.advertising, pattern: '\b(ADVERTIS(ING|EMENT)|LISTING FEE|RENTAL LISTING|CLASSIFIEDS?)\b', category: ADVERTISING, weight: 0.90, directions: [outflow]}
+- {id: kw.advertising, pattern: '\b(ADVERTIS(ING|EMENT)|ADS|LISTING FEE|RENTAL LISTING|CLASSIFIEDS?)\b', category: ADVERTISING, weight: 0.90, directions: [outflow]}
 - {id: kw.management, pattern: '\b(PROPERTY MGMT|PROPERTY MANAGEMENT|MGMT FEE|MANAGEMENT FEE|REALTY MGMT)\b', category: MANAGEMENT_FEES, weight: 0.93, directions: [outflow]}
 - {id: kw.commission, pattern: '\b(COMMISSION|LEASING FEE|TENANT PLACEMENT|FINDERS FEE)\b', category: COMMISSIONS, weight: 0.90, directions: [outflow]}
 - {id: kw.parking, pattern: '\b(PARKING|TOLLS?|TOLLWAY)\b', category: AUTO_TRAVEL, weight: 0.80, directions: [outflow]}
 - {id: kw.screening, pattern: '\b(TENANT SCREENING|BACKGROUND CHECK|CREDIT REPORT)\b', category: LEGAL_PROFESSIONAL, weight: 0.85, directions: [outflow]}
+- {id: kw.electric_utility, pattern: '\b(ELECTRIC|POWER|LIGHT AND POWER)( (COMPANY|CO|UTILITY|SERVICE))?$', category: UTILITIES, weight: 0.88, directions: [outflow]}

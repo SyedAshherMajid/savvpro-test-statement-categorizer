@@ -66,7 +66,11 @@ def apply(state: RowState) -> None:
         state.flags.add(Flag.CHECK_NO_PAYEE)
         return
 
-    if not state.is_p2p or not looks_like_person(txn.counterparty):
+    if not state.is_p2p:
+        _rent_word_inflow(state)
+        return
+    if not looks_like_person(txn.counterparty):
+        _rent_word_inflow(state)
         return
 
     who = (txn.counterparty or "").title()
@@ -108,3 +112,33 @@ def apply(state: RowState) -> None:
             )
         else:
             state.flags.add(Flag.PAYMENT_TO_INDIVIDUAL)
+
+
+def _is_checking_inflow(state: RowState) -> bool:
+    txn = state.txn
+    return txn.direction is Direction.INFLOW and txn.account_type is AccountType.CHECKING
+
+
+def _rent_word_inflow(state: RowState) -> None:
+    """Rent can also arrive as an ACH/OFX credit, or a P2P memo we couldn't split from the name."""
+    if (
+        _is_checking_inflow(state)
+        and RENT_RE.search(state.text)
+        and not DEPOSIT_RE.search(state.text)
+    ):
+        state.add(Category.RENT, 0.90, "channel", "ch.rent_word", "Deposit mentions rent.")
+
+
+def person_inflow_fallback(state: RowState) -> None:
+    """Runs after merchant/keyword matching: an unexplained credit naming a person is often rent."""
+    txn = state.txn
+    if state.candidates or state.is_p2p or not _is_checking_inflow(state):
+        return
+    if looks_like_person(txn.merchant_key):
+        state.add(
+            Category.RENT,
+            0.70,
+            "channel",
+            "ch.rent_person",
+            f"Payment from a person ({txn.merchant_key.title()}). Often rent, but there's no memo.",
+        )

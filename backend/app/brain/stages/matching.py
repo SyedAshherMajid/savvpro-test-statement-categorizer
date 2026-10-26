@@ -47,7 +47,7 @@ def merchants(state: RowState, rules: RuleSet) -> None:
 
 
 def keywords(state: RowState, rules: RuleSet) -> None:
-    haystack = f"{state.txn.merchant_key} {(state.txn.memo or '').upper()}"
+    haystack = f"{state.txn.merchant_key} {(state.txn.memo or '').upper()}".strip()
     for rule in rules.keywords:
         # Keyword direction lists describe normal spending; inflows are judged as refunds later.
         if state.direction is Direction.OUTFLOW and Direction.OUTFLOW not in rule.directions:

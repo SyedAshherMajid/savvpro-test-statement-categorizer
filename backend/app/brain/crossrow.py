@@ -1,6 +1,6 @@
 """Passes that need the whole statement: duplicates, recurring payments, outliers, 1099 totals."""
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from statistics import median
 
@@ -88,17 +88,22 @@ def _boost_recurring(members: list[RowState], typical: float) -> None:
         state.flags.add(Flag.RECURRING)
 
 
+def _regular_amount(amounts: list[int]) -> int | None:
+    """The amount that repeats most in a group (e.g. monthly rent), if any repeats."""
+    amount, count = Counter(amounts).most_common(1)[0]
+    return amount if count >= 2 else None
+
+
 def _flag_outliers(members: list[RowState]) -> None:
     if len(members) < 3:
         return
     for state in members:
         others = [abs(m.txn.amount_cents) for m in members if m is not state]
-        base = median(others)
-        if base <= 0:
-            continue
+        regular = _regular_amount(others)
         is_rent = preliminary_top(state) is Category.RENT
-        ratio = RENT_OUTLIER_RATIO if is_rent else GENERIC_OUTLIER_RATIO
-        if abs(state.txn.amount_cents) > base * ratio:
+        base = regular if regular is not None else median(others)
+        ratio = RENT_OUTLIER_RATIO if is_rent and regular is not None else GENERIC_OUTLIER_RATIO
+        if base > 0 and abs(state.txn.amount_cents) > base * ratio:
             state.flags.add(Flag.AMOUNT_OUTLIER)
             state.flags.discard(Flag.RECURRING)
 

@@ -12,7 +12,7 @@ from app.brain.context import BrainContext
 from app.brain.resolver import resolve
 from app.brain.stages import channel, matching, structural
 from app.brain.state import RowState, new_state
-from app.domain.enums import AccountType, Direction, Flag
+from app.domain.enums import Flag
 from app.domain.models import Decision, Transaction
 
 MIN_MEANINGFUL_CHARS = 3
@@ -33,14 +33,12 @@ def analyze(txn: Transaction, ctx: BrainContext) -> RowState:
     state = new_state(txn)
     structural.apply(state, ctx.rules)
     if not state.short_circuit:
-        # Money arriving on a credit card from a merchant (not a payment) is a refund by nature.
-        if txn.account_type is AccountType.CREDIT_CARD and txn.direction is Direction.INFLOW:
-            state.refund_evidence = True
         channel.apply(state)
         matching.memory(state, ctx.memory)
         matching.merchants(state, ctx.rules)
         matching.keywords(state, ctx.rules)
         matching.fuzzy(state, ctx.rules, ctx.settings)
+        channel.person_inflow_fallback(state)
     _policy(state, ctx)
     return state
 
