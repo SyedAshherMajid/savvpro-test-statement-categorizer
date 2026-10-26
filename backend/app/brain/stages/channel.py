@@ -10,6 +10,9 @@ DEPOSIT_RETURN_RE = re.compile(
     r"\b(DEPOSIT|SEC DEP)\b.*\b(RETURN|REFUND)|\b(RETURN|REFUND)\b.*\bDEPOSIT\b"
 )
 RENT_RE = re.compile(r"\bRENT\b")
+NOT_RENT_RE = re.compile(
+    r"(HELP|GIFT|LOAN|PARENT|PARENTS|FAMILY|REIMBURSEMENT|REFUND|PERSONAL|INVEST(MENT)?)"
+)
 RENT_EXTRA_RE = re.compile(r"\b(LATE FEE|PET (FEE|RENT)|PARKING FEE)\b")
 BUSINESS_TOKENS = frozenset(
     {
@@ -125,6 +128,7 @@ def _rent_word_inflow(state: RowState) -> None:
         _is_checking_inflow(state)
         and RENT_RE.search(state.text)
         and not DEPOSIT_RE.search(state.text)
+        and not NOT_RENT_RE.search(state.text)
     ):
         state.add(Category.RENT, 0.90, "channel", "ch.rent_word", "Deposit mentions rent.")
 

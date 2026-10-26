@@ -1,6 +1,7 @@
 # Merchants that sell both business and personal items. A match always asks the user,
 # unless the user already told us (memory) how to treat that merchant.
 - AMAZON
+- AMZN
 - WALMART
 - COSTCO
 - TARGET

@@ -33,3 +33,14 @@ repos:
         language: system
         pass_filenames: false
         files: ^backend/.*\.py$
+      - id: prettier
+        name: prettier (frontend)
+        entry: npm --prefix frontend exec -- prettier --check
+        language: system
+        files: ^frontend/src/.*\.(ts|tsx|css|json)$
+      - id: eslint
+        name: eslint (frontend)
+        entry: npm --prefix frontend run lint --
+        language: system
+        pass_filenames: false
+        files: ^frontend/src/.*\.(ts|tsx)$

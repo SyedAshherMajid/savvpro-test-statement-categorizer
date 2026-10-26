@@ -5,13 +5,14 @@ on:
     tags: ["v*.*.*"]
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 jobs:
   ci:
     name: Full CI
     uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
 
   images:
     name: Build and push images to GHCR

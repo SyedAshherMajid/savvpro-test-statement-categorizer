@@ -1,4 +1,4 @@
-# Local stack: API (internal only) + web (published on :3000).
+# Local stack: API (internal only) + web (published on 127.0.0.1:3000 only; the app has no login).
 # Dev Swagger access: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 name: ledgerly
 
@@ -29,7 +29,7 @@ services:
     environment:
       API_INTERNAL_URL: http://api:8000
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       api:
         condition: service_healthy

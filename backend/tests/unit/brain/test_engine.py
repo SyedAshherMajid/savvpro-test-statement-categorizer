@@ -241,3 +241,54 @@ def test_auto_decisions_always_have_category_and_no_blocking_flag(run: Run) -> N
 def test_determinism(run: Run) -> None:
     rows = [zelle_in("MARIA K LOPEZ", 185000, row=i, day=date(2026, i, 2)) for i in (1, 2, 3)]
     assert run(*rows) == run(*rows)
+
+
+def test_EC1_water_heater_is_not_a_utility_bill(run: Run) -> None:
+    for text in (
+        "NEW WATER HEATER INSTALL",
+        "WATER DAMAGE RESTORATION SERVPRO",
+        "WATER BOTTLE SUPPLY",
+    ):
+        [d] = run(txn(text, -150000, channel="CARD"))
+        assert d.status is Status.NEEDS_REVIEW, text
+
+
+def test_EC1_real_water_bill_still_auto(run: Run) -> None:
+    [d] = run(txn("CITY WATER AND SEWER DEPT", -9240, channel="ACH"))
+    assert (d.status, d.category) == (Status.AUTO, Category.UTILITIES)
+
+
+def test_EC2_parents_rent_help_is_not_tenant_rent(run: Run) -> None:
+    [d] = run(txn("DEPOSIT PARENT'S RENT HELP", 100000, channel="ACH"))
+    assert d.status is Status.NEEDS_REVIEW
+
+
+def test_EC3_refund_larger_than_purchase_needs_review(run: Run) -> None:
+    buy = txn("HOME DEPOT", -5000, row=1, merchant_key="HOME DEPOT", day=date(2026, 1, 2))
+    back = txn("HOME DEPOT RETURN", 9000, row=2, merchant_key="HOME DEPOT", day=date(2026, 3, 2))
+    decisions = run(buy, back)
+    assert decisions[1].status is Status.NEEDS_REVIEW
+    assert Flag.REFUND_EXCEEDS_PURCHASE in decisions[1].flags
+
+
+def test_EC5_returned_rent_variants_reverse_rent(run: Run) -> None:
+    for text in ("NSF RETURN RENT", "RENT REVERSAL"):
+        [d] = run(txn(text, -95000, channel=None))
+        assert (d.status, d.category) == (Status.AUTO, Category.RENT), text
+        assert Flag.RENT_REVERSAL in d.flags
+
+
+def test_EC5_returned_check_fee_is_a_bank_fee(run: Run) -> None:
+    [d] = run(txn("RETURNED CHECK FEE", -3000, channel=None))
+    assert (d.status, d.category) == (Status.AUTO, Category.OTHER_EXPENSE)
+
+
+def test_EC6_card_payment_variants_from_checking(run: Run) -> None:
+    for text in ("PAYMENT TO CHASE CARD", "CHASE CREDIT CRD AUTOPAY"):
+        [d] = run(txn(text, -50000, channel=None))
+        assert (d.status, d.category) == (Status.AUTO, Category.CARD_PAYMENT), text
+
+
+def test_EC7_amzn_marketplace_is_mixed_use(run: Run) -> None:
+    [d] = run(txn("AMZN MKTP US", -2000, merchant_key="AMZN MKTP US", account=CARD))
+    assert d.status is Status.NEEDS_REVIEW and Flag.MIXED_USE_MERCHANT in d.flags

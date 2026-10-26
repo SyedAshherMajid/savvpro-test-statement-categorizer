@@ -6,7 +6,7 @@
   score: 0.99
 
 - id: st.card_payment.checking
-  pattern: '\b(CREDIT )?CARD (PAYMENT|PMT|AUTOPAY)\b|\bAUTOPAY\b.*\bCARD\b|\bCARD\b.*\bAUTOPAY\b'
+  pattern: '\b(CREDIT )?(CARD|CRD) (PAYMENT|PMT|AUTOPAY)\b|\bAUTOPAY\b.*\b(CARD|CRD)\b|\b(CARD|CRD)\b.*\bAUTOPAY\b|\bPAYMENT TO\b.*\b(CARD|VISA|MASTERCARD|AMEX)\b'
   category: CARD_PAYMENT
   score: 0.99
   directions: [outflow]
@@ -39,7 +39,7 @@
   account_types: [checking]
 
 - id: st.nsf_return
-  pattern: '^(?!.*\b(FEE|CHARGE)\b).*\b(RETURNED ITEM|RETURN(ED)? DEPOSIT(ED)? ITEM|DEPOSITED ITEM RETURNED|CHARGEBACK)\b'
+  pattern: '^(?!.*\b(FEE|CHARGE)\b).*\b(RETURNED ITEM|NSF RETURN|RENT REVERSAL|RETURN(ED)? CHECK|RETURN(ED)? DEPOSIT(ED)? ITEM|DEPOSITED ITEM RETURNED|CHARGEBACK)\b'
   category: RENT
   score: 0.92
   directions: [outflow]
@@ -47,7 +47,7 @@
   is_refund: true
 
 - id: st.bank_fee
-  pattern: '\b(SERVICE|MAINTENANCE|MONTHLY|NSF|OVERDRAFT|WIRE|ATM|FOREIGN (TRANSACTION|TXN)|RETURNED ITEM) (CHARGE|FEE)\b'
+  pattern: '\b(SERVICE|MAINTENANCE|MONTHLY|NSF|OVERDRAFT|WIRE|ATM|FOREIGN (TRANSACTION|TXN)|RETURNED (ITEM|CHECK)) (CHARGE|FEE)\b'
   category: OTHER_EXPENSE
   score: 0.97
   directions: [outflow]

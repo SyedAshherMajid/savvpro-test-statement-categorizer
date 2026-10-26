@@ -139,6 +139,8 @@ def link_refunds(states: Sequence[RowState]) -> None:
             if p.txn.posted_date <= state.txn.posted_date
         ]
         if earlier:
+            if abs(state.txn.amount_cents) > max(abs(p.txn.amount_cents) for p in earlier):
+                state.flags.add(Flag.REFUND_EXCEEDS_PURCHASE)
             original = max(earlier, key=lambda p: p.txn.posted_date)
             state.extra_reasons.append(
                 f"Matches the {original.txn.posted_date:%b %d} purchase "

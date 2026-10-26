@@ -58,6 +58,9 @@ FLAG_TEXT: dict[Flag, str] = {
     Flag.LOW_INFORMATION: "The description is too short to tell what this is.",
     Flag.ZERO_AMOUNT: "Zero amount, probably a card authorization hold.",
     Flag.AMBIGUOUS_MATCH: "Two categories fit about equally well.",
+    Flag.REFUND_EXCEEDS_PURCHASE: (
+        "This refund is larger than the matching purchase in this statement. Please check it."
+    ),
     Flag.RENT_REVERSAL: "A tenant payment was returned, so it reduces rent received.",
     Flag.POSSIBLE_1099: "Payments to this person total $600 or more. You may need to file a 1099.",
     Flag.RECURRING: "Recurring monthly payment.",
