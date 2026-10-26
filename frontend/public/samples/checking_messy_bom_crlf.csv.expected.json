@@ -23,63 +23,63 @@
     ]
   },
   {
-    "row_index": 5,
+    "row_index": 6,
     "case_id": "P06",
     "category": "RENT",
     "status": "auto",
     "flags_contains": []
   },
   {
-    "row_index": 6,
+    "row_index": 7,
     "case_id": "P03",
     "category": "REPAIRS",
     "status": "auto",
     "flags_contains": []
   },
   {
-    "row_index": 8,
+    "row_index": 9,
     "case_id": "P22",
     "category": "UTILITIES",
     "status": "auto",
     "flags_contains": []
   },
   {
-    "row_index": 9,
+    "row_index": 10,
     "case_id": "P09",
     "category": "UTILITIES",
     "status": "auto",
     "flags_contains": []
   },
   {
-    "row_index": 10,
+    "row_index": 11,
     "case_id": "P10",
     "category": "RENT",
     "status": "auto",
     "flags_contains": []
   },
   {
-    "row_index": 11,
+    "row_index": 12,
     "case_id": null,
     "category": "INSURANCE",
     "status": "auto",
     "flags_contains": []
   },
   {
-    "row_index": 12,
+    "row_index": 13,
     "case_id": null,
     "category": "RENT",
     "status": "auto",
     "flags_contains": []
   },
   {
-    "row_index": 13,
+    "row_index": 14,
     "case_id": null,
     "category": "UTILITIES",
     "status": "auto",
     "flags_contains": []
   },
   {
-    "row_index": 14,
+    "row_index": 15,
     "case_id": null,
     "category": "UTILITIES",
     "status": "auto",

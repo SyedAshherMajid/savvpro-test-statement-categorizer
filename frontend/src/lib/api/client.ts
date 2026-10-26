@@ -35,7 +35,8 @@ export function toAppError(problem: Partial<ProblemJson> & { status: number }): 
       415,
     );
   if (status === 422) {
-    const rows = (problem.errors ?? []).map((e) =>
+    const rowErrors = (problem.errors ?? []) as { row_index?: number | null; message: string }[];
+    const rows = rowErrors.map((e) =>
       e.row_index != null ? `Row ${e.row_index}: ${e.message}` : e.message,
     );
     const base = problem.detail ?? "Some rows could not be read.";

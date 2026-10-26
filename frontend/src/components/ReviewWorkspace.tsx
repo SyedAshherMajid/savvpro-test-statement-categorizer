@@ -1,4 +1,5 @@
 "use client";
+import type { CategoryCode } from "@/lib/api/types";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DecisionPanel, type Draft } from "./DecisionPanel";
@@ -115,7 +116,7 @@ export function ReviewWorkspace({ id }: { id: string }) {
     if (nextRow) setSelectedId(nextRow.id);
     const label = categoryLabel(cats.data, draft.category);
     fix.mutate(
-      { id: target.id, category: draft.category, remember: draft.remember, apply_to_similar: draft.similar },
+      { id: target.id, category: draft.category as CategoryCode, remember: draft.remember, apply_to_similar: draft.similar },
       {
         onSuccess: (res) => {
           const undo = async () => {
