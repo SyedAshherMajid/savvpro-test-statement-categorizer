@@ -1,0 +1,53 @@
+# Stage 1: structural / not-counted rules, matched against the upper-cased description + memo.
+# A score >= 0.97 short-circuits the merchant/keyword stages.
+- id: st.transfer
+  pattern: '\b(ONLINE |MOBILE |INTERNAL )?(TRANSFER|XFER) (TO|FROM)\b|\bTO (SAVINGS|CHECKING)\b|\bFROM (SAVINGS|CHECKING)\b'
+  category: TRANSFER
+  score: 0.99
+
+- id: st.card_payment.checking
+  pattern: '\b(CREDIT )?CARD (PAYMENT|PMT|AUTOPAY)\b|\bAUTOPAY\b.*\bCARD\b|\bCARD\b.*\bAUTOPAY\b'
+  category: CARD_PAYMENT
+  score: 0.99
+  directions: [outflow]
+  account_types: [checking]
+
+- id: st.card_payment.card
+  pattern: '\bPAYMENT\b.*\b(THANK YOU|RECEIVED)\b|\bAUTOPAY PAYMENT\b|\bONLINE PAYMENT\b'
+  category: CARD_PAYMENT
+  score: 0.99
+  directions: [inflow]
+  account_types: [credit_card]
+
+- id: st.owner_contribution
+  pattern: '\bOWNER (CONTRIBUTION|DEPOSIT|INVESTMENT)\b|\bCAPITAL CONTRIBUTION\b'
+  category: OWNER_CONTRIBUTION
+  score: 0.97
+  directions: [inflow]
+
+- id: st.owner_draw
+  pattern: '\bOWNER (DRAW|DISTRIBUTION)\b'
+  category: OWNER_DRAW
+  score: 0.97
+  directions: [outflow]
+
+- id: st.interest_earned
+  pattern: '\bINTEREST (PAID|EARNED|PAYMENT|CREDIT)\b'
+  category: INTEREST_EARNED
+  score: 0.97
+  directions: [inflow]
+  account_types: [checking]
+
+- id: st.nsf_return
+  pattern: '\b(RETURNED ITEM|RETURN(ED)? DEPOSIT(ED)? ITEM|DEPOSITED ITEM RETURNED|CHARGEBACK)\b(?! (FEE|CHARGE)\b)'
+  category: RENT
+  score: 0.92
+  directions: [outflow]
+  flags: [RENT_REVERSAL]
+  is_refund: true
+
+- id: st.bank_fee
+  pattern: '\b(SERVICE|MAINTENANCE|MONTHLY|NSF|OVERDRAFT|WIRE|ATM|FOREIGN TRANSACTION|RETURNED ITEM) (CHARGE|FEE)\b'
+  category: OTHER_EXPENSE
+  score: 0.97
+  directions: [outflow]
