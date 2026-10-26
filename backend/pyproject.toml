@@ -41,9 +41,11 @@ extend-exclude = ["migrations/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "S", "SIM", "RUF", "C4", "PT"]
+ignore = ["RUF001", "RUF002"]  # intentional unicode (minus sign, curly quotes) in parsers
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106", "N802"]
+"tests/**" = ["S101", "S105", "S106", "N802", "E501", "SIM105"]
+"app/core/errors.py" = ["S101", "N818"]
 
 [tool.mypy]
 strict = true
