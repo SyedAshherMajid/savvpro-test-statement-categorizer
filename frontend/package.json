@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "contrast": "node scripts/check_contrast.mjs",
     "test": "vitest",
     "e2e": "playwright test",
     "gen:api": "openapi-typescript ../backend/openapi.json -o src/lib/api/schema.d.ts",

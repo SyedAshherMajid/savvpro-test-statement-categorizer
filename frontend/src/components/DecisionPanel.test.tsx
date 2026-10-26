@@ -6,7 +6,15 @@ import { DecisionPanel, type Draft } from "./DecisionPanel";
 import { Toast } from "./Toast";
 import { categories, tx } from "@/test/fixtures";
 
-function Harness({ onConfirm = vi.fn(), undo }: { onConfirm?: (d: Draft) => void; undo?: () => void }) {
+function Harness({
+  onConfirm = vi.fn(),
+  undo,
+  similarRows,
+}: {
+  onConfirm?: (d: Draft) => void;
+  undo?: () => void;
+  similarRows?: ReturnType<typeof tx>[];
+}) {
   const t = tx();
   const [draft, setDraft] = useState<Draft>({ category: "REPAIRS", remember: false, similar: false });
   return (
@@ -19,6 +27,7 @@ function Harness({ onConfirm = vi.fn(), undo }: { onConfirm?: (d: Draft) => void
         onConfirm={() => onConfirm(draft)}
         onSkip={() => {}}
         totalSoFar={120418}
+        similarRows={similarRows}
       />
       <Toast toast={undo ? { id: 1, message: "Confirmed.", undo } : null} onDismiss={() => {}} />
     </>
@@ -48,6 +57,17 @@ describe("DecisionPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: /Utilities/ }));
     await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
     expect(onConfirm.mock.calls[0]?.[0].category).toBe("UTILITIES");
+  });
+
+  it("lists the similar rows before applying", () => {
+    render(
+      <Harness
+        similarRows={[tx({ id: "a", description: "HOME DEPOT #1", amount_cents: -1500 }), tx({ id: "b", description: "HOME DEPOT #2", amount_cents: -2500 })]}
+      />,
+    );
+    const list = screen.getByRole("list", { name: "Similar rows" });
+    expect(list).toHaveTextContent("HOME DEPOT #1");
+    expect(list).toHaveTextContent("HOME DEPOT #2");
   });
 
   it("offers undo in the toast", async () => {

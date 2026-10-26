@@ -39,8 +39,11 @@ RuleSetDep = Annotated[RuleSet, Depends(get_ruleset)]
 CategorizeDep = Annotated[CategorizeFn | None, Depends(get_categorize)]
 
 
-def statement_out(session: Session, st: Statement) -> StatementOut:
-    counts = StatementRepo(session).status_counts(st.id)
+def statement_out(
+    session: Session, st: Statement, counts: dict[str, int] | None = None
+) -> StatementOut:
+    if counts is None:
+        counts = StatementRepo(session).status_counts(st.id)
     return StatementOut(
         id=st.id,
         filename=st.filename,

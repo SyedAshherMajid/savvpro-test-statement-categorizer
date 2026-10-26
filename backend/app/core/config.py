@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="APP_", extra="ignore")
 
-    env: str = "development"
+    env: str = "production"  # dev/test opt in via APP_ENV
     database_url: str = "sqlite:///./data/app.db"
     cors_origins: str = "http://localhost:3000"
     max_upload_bytes: int = 5_242_880

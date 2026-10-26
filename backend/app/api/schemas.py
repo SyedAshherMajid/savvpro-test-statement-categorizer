@@ -123,6 +123,9 @@ class ProblemDetail(BaseModel):
     instance: str
     code: str | None = None
     errors: list[dict[str, object]] | None = None
+    existing_id: str | None = Field(
+        default=None, description="Present on 409: id of the statement with identical content."
+    )
 
 
 class HealthOut(BaseModel):

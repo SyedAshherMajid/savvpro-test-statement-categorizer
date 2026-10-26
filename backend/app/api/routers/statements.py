@@ -42,6 +42,10 @@ PROBLEMS: dict[int | str, dict[str, Any]] = {
     429: {"model": ProblemDetail, "description": "Rate limit exceeded"},
 }
 
+NOT_FOUND: dict[int | str, dict[str, Any]] = {
+    404: {"model": ProblemDetail, "description": "Statement not found"}
+}
+
 
 def _get_statement(session: SessionDep, statement_id: str) -> Statement:
     st = StatementRepo(session).get(statement_id)
@@ -74,29 +78,35 @@ async def upload_statement(
             ruleset=ruleset,
             categorize=categorize,
         )
-        return statement_out(session, st)
+        out = statement_out(session, st)
+        session.commit()
+        return out
 
     return await run_in_threadpool(work)
 
 
 @router.get("", response_model=list[StatementOut])
 def list_statements(session: SessionDep) -> list[StatementOut]:
-    return [statement_out(session, s) for s in StatementRepo(session).list()]
+    repo = StatementRepo(session)
+    statements = repo.list()
+    counts = repo.status_counts_for([s.id for s in statements])
+    return [statement_out(session, s, counts[s.id]) for s in statements]
 
 
-@router.get("/{statement_id}", response_model=StatementOut, responses={404: PROBLEMS[422]})
+@router.get("/{statement_id}", response_model=StatementOut, responses=NOT_FOUND)
 def get_statement(statement_id: str, session: SessionDep) -> StatementOut:
     return statement_out(session, _get_statement(session, statement_id))
 
 
-@router.delete("/{statement_id}", status_code=204)
+@router.delete("/{statement_id}", status_code=204, responses=NOT_FOUND)
 def delete_statement(statement_id: str, session: SessionDep) -> Response:
     if not StatementRepo(session).delete(statement_id):
         raise NotFound("Statement not found")
+    session.commit()
     return Response(status_code=204)
 
 
-@router.get("/{statement_id}/transactions", response_model=TransactionListOut)
+@router.get("/{statement_id}/transactions", response_model=TransactionListOut, responses=NOT_FOUND)
 def list_transactions(
     statement_id: str,
     session: SessionDep,
@@ -124,7 +134,7 @@ def list_transactions(
     return TransactionListOut(items=[transaction_out(r, by_key) for r in rows], total=total)
 
 
-@router.get("/{statement_id}/summary", response_model=SummaryOut)
+@router.get("/{statement_id}/summary", response_model=SummaryOut, responses=NOT_FOUND)
 def get_summary(statement_id: str, session: SessionDep) -> SummaryOut:
     _get_statement(session, statement_id)
     s = compute_summary(TransactionRepo(session).for_statement(statement_id))
@@ -143,7 +153,7 @@ def get_summary(statement_id: str, session: SessionDep) -> SummaryOut:
     )
 
 
-@router.get("/{statement_id}/export.csv", response_class=Response)
+@router.get("/{statement_id}/export.csv", response_class=Response, responses=NOT_FOUND)
 def export_statement(statement_id: str, session: SessionDep) -> Response:
     st = _get_statement(session, statement_id)
     body = export_csv(TransactionRepo(session).for_statement(statement_id))

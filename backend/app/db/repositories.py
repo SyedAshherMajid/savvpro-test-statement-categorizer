@@ -45,16 +45,22 @@ class StatementRepo:
         result = self.s.execute(delete(Statement).where(Statement.id == statement_id))
         return bool(result.rowcount)  # type: ignore[attr-defined]
 
-    def status_counts(self, statement_id: str) -> dict[str, int]:
+    def status_counts_for(self, statement_ids: Sequence[str]) -> dict[str, dict[str, int]]:
+        """One grouped query: statement_id -> {status -> count} (all statuses present)."""
+        out = {sid: {st.value: 0 for st in Status} for sid in statement_ids}
+        if not out:
+            return out
         q = (
-            select(TransactionRow.status, func.count())
-            .where(TransactionRow.statement_id == statement_id)
-            .group_by(TransactionRow.status)
+            select(TransactionRow.statement_id, TransactionRow.status, func.count())
+            .where(TransactionRow.statement_id.in_(list(out)))
+            .group_by(TransactionRow.statement_id, TransactionRow.status)
         )
-        counts = {st.value: 0 for st in Status}
-        for status, n in self.s.execute(q):
-            counts[status] = n
-        return counts
+        for sid, status, n in self.s.execute(q).tuples():
+            out[sid][status] = n
+        return out
+
+    def status_counts(self, statement_id: str) -> dict[str, int]:
+        return self.status_counts_for([statement_id])[statement_id]
 
 
 class TransactionRepo:
@@ -123,13 +129,20 @@ class TransactionRepo:
         )
         return self.s.scalars(q.order_by(TransactionRow.row_index)).all()
 
-    def prior_fingerprints(self) -> dict[str, str]:
-        """fingerprint -> id of the earliest real (non-duplicate) transaction already stored."""
+    def prior_fingerprints(self, account_type: str | None = None) -> dict[str, str]:
+        """fingerprint -> id of the earliest real (non-duplicate) stored transaction.
+
+        Scoped to one account type when given (a checking row never duplicates a card row).
+        Ordered newest-upload-first so the last write, the earliest upload, wins.
+        """
         q = (
             select(TransactionRow.fingerprint, TransactionRow.id)
+            .join(Statement, Statement.id == TransactionRow.statement_id)
             .where(TransactionRow.status != Status.DUPLICATE.value)
-            .order_by(TransactionRow.updated_at.desc())
+            .order_by(Statement.uploaded_at.desc(), Statement.id, TransactionRow.row_index.desc())
         )
+        if account_type is not None:
+            q = q.where(Statement.account_type == account_type)
         result: dict[str, str] = {}
         for fp, tid in self.s.execute(q):
             result[fp] = tid

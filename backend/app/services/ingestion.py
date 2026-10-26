@@ -5,6 +5,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import asdict
 from datetime import UTC, datetime
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.brain.context import BrainContext, BrainSettings
@@ -40,7 +41,12 @@ def brain_settings(settings: Settings) -> BrainSettings:
 
 
 def build_context(
-    session: Session, ruleset: RuleSet, settings: Settings, *, years: Sequence[int]
+    session: Session,
+    ruleset: RuleSet,
+    settings: Settings,
+    *,
+    years: Sequence[int],
+    account_type: AccountType | None = None,
 ) -> BrainContext:
     txn_repo = TransactionRepo(session)
     ytd: dict[str, int] = {}
@@ -51,13 +57,22 @@ def build_context(
         rules=ruleset,
         settings=brain_settings(settings),
         memory=MerchantRuleRepo(session).memory(),
-        prior_fingerprints=txn_repo.prior_fingerprints(),
+        prior_fingerprints=txn_repo.prior_fingerprints(
+            account_type.value if account_type else None
+        ),
         ytd_by_counterparty=ytd,
     )
 
 
 def _value(category: Category | None) -> str | None:
     return category.value if category else None
+
+
+def _duplicate(existing_id: str) -> DuplicateStatement:
+    return DuplicateStatement(
+        f"This exact file was already uploaded as statement {existing_id}",
+        extra={"existing_id": existing_id},
+    )
 
 
 def process_upload(
@@ -70,22 +85,25 @@ def process_upload(
     ruleset: RuleSet,
     categorize: CategorizeFn | None = None,
 ) -> Statement:
-    """Run the whole pipeline in the caller's transaction. Raw bytes are discarded after parsing."""
+    """Run the whole pipeline; the caller commits. Raw bytes are discarded after parsing."""
     sha = hashlib.sha256(data).hexdigest()
     statements = StatementRepo(session)
     existing = statements.find_by_sha(sha)
     if existing is not None:
-        raise DuplicateStatement(
-            f"This exact file was already uploaded as statement {existing.id}",
-            extra={"existing_id": existing.id},
-        )
+        raise _duplicate(existing.id)
     safe_name = sanitize_filename(filename)
     fmt, parsed = parse_statement(data, safe_name, max_rows=settings.max_rows)
     txns, norm_warnings = normalize(parsed, account_type)
     if not txns:
         raise ParseError("No usable transactions in the file", code="NO_TRANSACTIONS")
 
-    ctx = build_context(session, ruleset, settings, years=[t.posted_date.year for t in txns])
+    ctx = build_context(
+        session,
+        ruleset,
+        settings,
+        years=[t.posted_date.year for t in txns],
+        account_type=account_type,
+    )
     decisions = (categorize or default_categorize())(txns, ctx)
     if len(decisions) != len(txns):
         raise RuntimeError("categorize returned a different number of decisions")
@@ -102,7 +120,15 @@ def process_upload(
         row_count=len(txns),
         warnings=[asdict(w) for w in (*parsed.warnings, *norm_warnings)],
     )
-    statements.add(statement)
+    try:
+        statements.add(statement)
+    except IntegrityError:
+        # A concurrent identical upload won the race on the unique file_sha256.
+        session.rollback()
+        winner = statements.find_by_sha(sha)
+        if winner is None:
+            raise
+        raise _duplicate(winner.id) from None
     statement_id_var.set(statement.id)
 
     ids = {t.row_index: new_id() for t in txns}

@@ -261,6 +261,11 @@ export interface components {
             errors?: {
                 [key: string]: unknown;
             }[] | null;
+            /**
+             * Existing Id
+             * @description Present on 409: id of the statement with identical content.
+             */
+            existing_id?: string | null;
             /** Instance */
             instance: string;
             /** Status */
@@ -567,7 +572,7 @@ export interface operations {
                     "application/json": components["schemas"]["StatementOut"];
                 };
             };
-            /** @description Statement could not be parsed */
+            /** @description Statement not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -605,6 +610,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Statement not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetail"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -633,6 +647,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Statement not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetail"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -663,6 +686,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SummaryOut"];
+                };
+            };
+            /** @description Statement not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Validation Error */
@@ -704,6 +736,15 @@ export interface operations {
                     "application/json": components["schemas"]["TransactionListOut"];
                 };
             };
+            /** @description Statement not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetail"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -739,13 +780,22 @@ export interface operations {
                     "application/json": components["schemas"]["PatchResult"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Transaction not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Invalid correction */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ProblemDetail"];
                 };
             };
         };
@@ -770,13 +820,22 @@ export interface operations {
                     "application/json": components["schemas"]["TransactionOut"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Transaction not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Invalid correction */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ProblemDetail"];
                 };
             };
         };

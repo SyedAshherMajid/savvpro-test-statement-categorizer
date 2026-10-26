@@ -25,6 +25,13 @@ describe("checkFile", () => {
 });
 
 describe("UploadForm", () => {
+  it("shows a focus ring on the drop zone when the hidden input is focused", () => {
+    setup();
+    const input = screen.getByLabelText(/Drop a CSV or OFX file/);
+    expect(input).toHaveClass("peer");
+    expect(input.nextElementSibling).toHaveClass("peer-focus-visible:outline-2");
+  });
+
   it("shows a friendly error for an unsupported file", async () => {
     setup();
     const input = screen.getByLabelText(/Drop a CSV or OFX file/) as HTMLInputElement;

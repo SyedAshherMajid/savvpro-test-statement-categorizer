@@ -242,6 +242,18 @@
             ],
             "title": "Errors"
           },
+          "existing_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Present on 409: id of the statement with identical content.",
+            "title": "Existing Id"
+          },
           "instance": {
             "title": "Instance",
             "type": "string"
@@ -862,6 +874,16 @@
           "204": {
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Statement not found"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -910,7 +932,7 @@
                 }
               }
             },
-            "description": "Statement could not be parsed"
+            "description": "Statement not found"
           },
           "422": {
             "content": {
@@ -946,6 +968,16 @@
         "responses": {
           "200": {
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Statement not found"
           },
           "422": {
             "content": {
@@ -988,6 +1020,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Statement not found"
           },
           "422": {
             "content": {
@@ -1132,6 +1174,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Statement not found"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1184,15 +1236,25 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Transaction not found"
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid correction"
           }
         },
         "summary": "Patch Transaction",
@@ -1226,15 +1288,25 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Transaction not found"
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid correction"
           }
         },
         "summary": "Restore Duplicate",

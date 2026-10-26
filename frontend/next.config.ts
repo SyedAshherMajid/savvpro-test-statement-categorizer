@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const api = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
+// CSP note: Next.js emits inline bootstrap scripts, so 'unsafe-inline' stays for script-src. Dropping
+// it needs a per-request nonce from middleware, which forces every page to render dynamically; the app
+// has no HTML injection sink (React escapes all output), so this is an accepted trade-off.
+// Everything else is locked down: no objects, no foreign base URI or form targets, no framing,
+// and 'unsafe-eval' is development-only (React refresh).
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
@@ -12,6 +17,9 @@ const securityHeaders = [
       "img-src 'self' data:",
       "font-src 'self'",
       "connect-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
       "frame-ancestors 'none'",
     ].join("; "),
   },

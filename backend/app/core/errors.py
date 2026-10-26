@@ -9,6 +9,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.core.headers import security_headers
+
 log = logging.getLogger("app.errors")
 
 PROBLEM_JSON = "application/problem+json"
@@ -102,7 +104,11 @@ def problem_response(
         body["errors"] = list(errors)
     if extra:
         body.update(extra)
-    headers = {"X-Request-ID": request_id} if request_id else {}
+    # Unhandled 500s are answered by ServerErrorMiddleware, outside our middleware stack,
+    # so the response itself must carry the request id and security headers.
+    headers = security_headers(relaxed=False)
+    if request_id:
+        headers["X-Request-ID"] = request_id
     return JSONResponse(body, status_code=status, media_type=PROBLEM_JSON, headers=headers)
 
 

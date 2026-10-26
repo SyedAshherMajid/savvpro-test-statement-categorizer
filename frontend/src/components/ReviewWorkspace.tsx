@@ -13,9 +13,10 @@ import {
   useCategories,
   useFixTransaction,
   useRestoreDuplicate,
+  TX_PAGE,
+  usePagedTransactions,
   useStatement,
   useSummary,
-  useTransactions,
 } from "@/lib/api/hooks";
 import type { TransactionOut } from "@/lib/api/types";
 import { categoryLabel, merchantName } from "@/lib/categories";
@@ -25,7 +26,8 @@ type Tab = "review" | "all" | "excluded" | "dups";
 
 export function ReviewWorkspace({ id }: { id: string }) {
   const st = useStatement(id);
-  const txq = useTransactions(id);
+  const [pages, setPages] = useState(1);
+  const txq = usePagedTransactions(id, pages);
   const cats = useCategories();
   const summary = useSummary(id);
   const fix = useFixTransaction(id);
@@ -40,8 +42,16 @@ export function ReviewWorkspace({ id }: { id: string }) {
   const [leaving, setLeaving] = useState<Map<string, TransactionOut>>(new Map());
   const undoRef = useRef<(() => void) | null>(null);
   const [initialNeed, setInitialNeed] = useState(0);
+  // The API cannot unconfirm a row (any fix marks it user_confirmed), so an undone row is kept
+  // "reopened" on the client: it shows as Needs your review until the user confirms it again.
+  const [reopened, setReopened] = useState<Map<string, TransactionOut>>(new Map());
+  const panelRef = useRef<HTMLElement>(null);
+  const refocusPanel = useRef(false);
 
-  const items = useMemo(() => txq.data?.items ?? [], [txq.data]);
+  const items = useMemo(
+    () => (txq.data?.items ?? []).map((t) => (t.status === "user_confirmed" ? (reopened.get(t.id) ?? t) : t)),
+    [txq.data, reopened],
+  );
   const kindOf = useCallback(
     (code: string | null) => cats.data?.find((c) => c.code === code)?.kind,
     [cats.data],
@@ -72,6 +82,23 @@ export function ReviewWorkspace({ id }: { id: string }) {
 
   const live = visible.filter((t) => !leaving.has(t.id));
   const sel = live.find((t) => t.id === selectedId) ?? live[0] ?? null;
+  const similarRows = useMemo(
+    () =>
+      sel
+        ? items.filter((t) => t.id !== sel.id && t.merchant_key === sel.merchant_key && t.status !== "user_confirmed" && t.status !== "duplicate")
+        : [],
+    [items, sel],
+  );
+
+  // After Confirm the panel remounts for the next row; put focus on its heading so keyboard and
+  // screen reader users keep their place (the heading is read out as the new row).
+  const selKey = sel?.id ?? null;
+  useEffect(() => {
+    if (!refocusPanel.current) return;
+    refocusPanel.current = false;
+    const target = panelRef.current?.querySelector<HTMLElement>("[data-decision-heading]") ?? panelRef.current;
+    target?.focus();
+  }, [selKey]);
 
   const defaults = (t: TransactionOut): Draft => ({
     category: t.category ?? t.brain_category ?? "",
@@ -94,11 +121,16 @@ export function ReviewWorkspace({ id }: { id: string }) {
   const confirm = useCallback(() => {
     if (!sel || !draft.category || fix.isPending) return;
     const target = sel;
-    const prior = new Map(
-      items
-        .filter((t) => t.id === target.id || (draft.similar && t.merchant_key === target.merchant_key && t.status !== "user_confirmed"))
-        .map((t) => [t.id, t.category ?? t.brain_category] as const),
+    const affected = items.filter(
+      (t) => t.id === target.id || (draft.similar && t.merchant_key === target.merchant_key && t.status !== "user_confirmed"),
     );
+    const prior = new Map(affected.map((t) => [t.id, t] as const));
+    setReopened((m) => {
+      const n = new Map(m);
+      affected.forEach((t) => n.delete(t.id));
+      return n;
+    });
+    if (panelRef.current?.contains(document.activeElement) || document.activeElement === document.body) refocusPanel.current = true;
     const nextIdx = live.findIndex((t) => t.id === target.id) + 1;
     const nextRow = live[nextIdx] ?? live[nextIdx - 2];
     if (activeTab === "review") {
@@ -120,12 +152,19 @@ export function ReviewWorkspace({ id }: { id: string }) {
       {
         onSuccess: (res) => {
           const undo = async () => {
+            const reopen = new Map<string, TransactionOut>();
             for (const row of res.updated) {
               const was = prior.get(row.id);
-              if (was) await api.fix(row.id, { category: was });
+              if (!was) continue;
+              const cat = was.category ?? was.brain_category;
+              if (cat) await api.fix(row.id, { category: cat });
+              if (was.status !== "user_confirmed") reopen.set(row.id, was);
             }
+            setReopened((m) => new Map([...m, ...reopen]));
+            setTab("review");
+            setSelectedId(target.id);
             await Promise.all([txq.refetch(), summary.refetch(), st.refetch()]);
-            setToast({ id: Date.now(), message: "Change undone." });
+            setToast({ id: Date.now(), message: "Change undone. The row is back in Needs your review." });
           };
           undoRef.current = () => void undo();
           const n = res.updated.length;
@@ -135,7 +174,7 @@ export function ReviewWorkspace({ id }: { id: string }) {
             undo: () => void undo(),
           });
         },
-        onError: (e) => setToast({ id: Date.now(), message: e.message }),
+        onError: (e) => setToast({ id: Date.now(), message: e.message, error: true }),
       },
     );
   }, [sel, draft, fix, items, live, activeTab, cats.data, txq, summary, st]);
@@ -236,7 +275,7 @@ export function ReviewWorkspace({ id }: { id: string }) {
             {txq.isLoading && <p className="p-4 text-muted">Loading transactions...</p>}
             {txq.isError && (
               <p role="alert" className="p-4 text-error">
-                {txq.error.message}{" "}
+                {txq.error?.message}{" "}
                 <button type="button" className="underline" onClick={() => void txq.refetch()}>Try again</button>
               </p>
             )}
@@ -265,6 +304,19 @@ export function ReviewWorkspace({ id }: { id: string }) {
                 onSelect={setSelectedId}
               />
             )}
+            {txq.data && txq.data.total > txq.data.items.length && (
+              <p className="px-4 py-3 text-sm text-muted">
+                Showing {txq.data.items.length} of {txq.data.total}.{" "}
+                <button
+                  type="button"
+                  className="text-ledger underline"
+                  disabled={txq.isFetching}
+                  onClick={() => setPages((p) => p + 1)}
+                >
+                  Show {Math.min(TX_PAGE, txq.data.total - txq.data.items.length)} more
+                </button>
+              </p>
+            )}
             <div className="flex items-center gap-3 px-4 py-3 text-sm text-muted">
               <span>{need} of {Math.max(initialNeed, need)} left</span>
               <progress
@@ -278,7 +330,7 @@ export function ReviewWorkspace({ id }: { id: string }) {
             </div>
           </div>
 
-          <aside className="decision-panel panel-shadow border-l border-rule bg-row" aria-label="Decision panel">
+          <aside ref={panelRef} tabIndex={-1} className="decision-panel panel-shadow border-l border-rule bg-row outline-offset-[-2px]" aria-label="Decision panel">
             {sel && cats.data ? (
               <DecisionPanel
                 key={sel.id}
@@ -291,6 +343,7 @@ export function ReviewWorkspace({ id }: { id: string }) {
                 onRestore={() => restore.mutate(sel.id)}
                 busy={fix.isPending}
                 totalSoFar={total}
+                similarRows={similarRows}
               />
             ) : (
               <p className="p-4 text-muted">Select a transaction to see why it was sorted this way.</p>

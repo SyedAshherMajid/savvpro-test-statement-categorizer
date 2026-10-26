@@ -28,12 +28,13 @@ def utcnow() -> datetime:
 
 class Statement(Base):
     __tablename__ = "statements"
+    __table_args__ = (UniqueConstraint("file_sha256", name="uq_statements_file_sha256"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     filename: Mapped[str] = mapped_column(String(255))
     source_format: Mapped[str] = mapped_column(String(8))
     account_type: Mapped[str] = mapped_column(String(16))
-    file_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    file_sha256: Mapped[str] = mapped_column(String(64))
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     period_start: Mapped[date | None] = mapped_column(Date, nullable=True)
     period_end: Mapped[date | None] = mapped_column(Date, nullable=True)

@@ -1,7 +1,7 @@
 "use client";
 import { useId, useState } from "react";
 import { CategorySelect, rankedCategories } from "./CategorySelect";
-import { confidenceWord, money, shortDate } from "@/lib/format";
+import { amount, confidenceWord, money, shortDate } from "@/lib/format";
 import { categoryLabel, flagText, lineText, merchantName, STATUS_LABEL } from "@/lib/categories";
 import type { CategoryOut, TransactionOut } from "@/lib/api/types";
 
@@ -21,6 +21,7 @@ export function DecisionPanel({
   onRestore,
   busy,
   totalSoFar,
+  similarRows,
 }: {
   tx: TransactionOut;
   categories: CategoryOut[];
@@ -32,6 +33,8 @@ export function DecisionPanel({
   busy?: boolean;
   /** Cents already counted on the chosen category's Schedule E line. */
   totalSoFar?: number;
+  /** The other rows "Also apply to N similar" would change, shown before applying. */
+  similarRows?: TransactionOut[];
 }) {
   const uid = useId();
   const [showWhy, setShowWhy] = useState(false);
@@ -45,7 +48,9 @@ export function DecisionPanel({
   return (
     <section aria-label="Decision" className="space-y-4 p-4">
       <header>
-        <h2 className="text-lg font-semibold leading-snug">{tx.description}</h2>
+        <h2 tabIndex={-1} data-decision-heading className="text-lg font-semibold leading-snug outline-offset-2">
+          {tx.description}
+        </h2>
         <p className="num !text-left text-xl">
           {money(tx.amount_cents)} <span className="text-sm text-muted">{shortDate(tx.posted_date)}</span>
         </p>
@@ -91,7 +96,7 @@ export function DecisionPanel({
                     aria-pressed={draft.category === c.code}
                     onClick={() => onDraft({ category: c.code })}
                     className={`flex w-full items-center gap-2 rounded-xs border px-2 py-1 text-left ${
-                      draft.category === c.code ? "border-ledger bg-ledger/10 font-medium" : "border-rule bg-row"
+                      draft.category === c.code ? "border-ledger bg-ledger/10 font-medium" : "border-muted bg-row"
                     }`}
                   >
                     <span className="w-4 text-muted" aria-hidden="true">
@@ -137,6 +142,18 @@ export function DecisionPanel({
                 />
                 Also apply to {tx.similar_count} similar
               </label>
+            )}
+            {tx.similar_count > 0 && similarRows && similarRows.length > 0 && (
+              <ul aria-label="Similar rows" className="ml-6 space-y-0.5 text-sm text-muted">
+                {similarRows.slice(0, 5).map((r) => (
+                  <li key={r.id} className="flex gap-2">
+                    <span className="w-14 shrink-0">{shortDate(r.posted_date)}</span>
+                    <span className="min-w-0 flex-1 truncate">{r.description}</span>
+                    <span className="num shrink-0">{amount(r.amount_cents)}</span>
+                  </li>
+                ))}
+                {similarRows.length > 5 && <li>and {similarRows.length - 5} more</li>}
+              </ul>
             )}
           </div>
 

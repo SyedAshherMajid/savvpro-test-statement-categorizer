@@ -11,6 +11,7 @@ from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.errors import UploadTooLarge
+from app.core.headers import security_headers
 from app.core.logging import request_id_var
 
 access_log = logging.getLogger("app.access")
@@ -113,13 +114,8 @@ class SecurityHeadersMiddleware:
         async def send_wrapper(message: Message) -> None:
             if message["type"] == "http.response.start":
                 h = MutableHeaders(scope=message)
-                if not relaxed:
-                    h["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'"
-                h["X-Content-Type-Options"] = "nosniff"
-                h["Referrer-Policy"] = "no-referrer"
-                h["X-Frame-Options"] = "DENY"
-                h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-                h["Cross-Origin-Opener-Policy"] = "same-origin"
+                for name, value in security_headers(relaxed=relaxed).items():
+                    h[name] = value
             await send(message)
 
         await self.app(scope, receive, send_wrapper)

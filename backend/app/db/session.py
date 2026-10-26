@@ -37,12 +37,12 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
 
 
 def get_session(request: Request) -> Iterator[Session]:
-    """One DB transaction per request: commit on success, roll back on any error."""
+    """One session per request. Never commits: services/routes commit explicitly before the
+    response is built. Anything left uncommitted is rolled back on close."""
     factory: sessionmaker[Session] = request.app.state.session_factory
     session = factory()
     try:
         yield session
-        session.commit()
     except Exception:
         session.rollback()
         raise

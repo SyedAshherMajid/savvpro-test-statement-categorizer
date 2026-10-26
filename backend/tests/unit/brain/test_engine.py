@@ -291,4 +291,5 @@ def test_EC6_card_payment_variants_from_checking(run: Run) -> None:
 
 def test_EC7_amzn_marketplace_is_mixed_use(run: Run) -> None:
     [d] = run(txn("AMZN MKTP US", -2000, merchant_key="AMZN MKTP US", account=CARD))
-    assert d.status is Status.NEEDS_REVIEW and Flag.MIXED_USE_MERCHANT in d.flags
+    assert d.status is Status.NEEDS_REVIEW
+    assert Flag.MIXED_USE_MERCHANT in d.flags

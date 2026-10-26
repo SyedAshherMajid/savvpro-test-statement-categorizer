@@ -75,6 +75,7 @@ export interface TxFilters {
   status?: string;
   q?: string;
   limit?: number;
+  offset?: number;
 }
 
 export const api = {
@@ -91,6 +92,7 @@ export const api = {
     if (f.status) p.set("status", f.status);
     if (f.q) p.set("q", f.q);
     p.set("limit", String(f.limit ?? 500));
+    if (f.offset) p.set("offset", String(f.offset));
     return request<TransactionPage>(`/v1/statements/${id}/transactions?${p.toString()}`);
   },
   fix: (txId: string, body: CorrectionIn) =>

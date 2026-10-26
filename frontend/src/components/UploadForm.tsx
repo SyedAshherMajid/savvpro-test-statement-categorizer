@@ -83,6 +83,19 @@ export function UploadForm() {
       </fieldset>
 
       <div>
+        <input
+          ref={inputRef}
+          id={inputId}
+          type="file"
+          accept=".csv,.ofx,.qfx"
+          className="peer sr-only"
+          disabled={busy}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void send(f);
+            e.target.value = "";
+          }}
+        />
         <label
           htmlFor={inputId}
           onDragOver={(e) => {
@@ -96,7 +109,7 @@ export function UploadForm() {
             const f = e.dataTransfer.files[0];
             if (f) void send(f);
           }}
-          className={`block cursor-pointer rounded-md border border-dashed px-6 py-10 ${
+          className={`block cursor-pointer rounded-md peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ledger border border-dashed px-6 py-10 ${
             dragging ? "border-ledger bg-row" : "border-muted bg-row/60"
           }`}
         >
@@ -105,19 +118,6 @@ export function UploadForm() {
           </span>
           <span className="mt-1 block text-muted">Up to 5 MB. Exports from most US banks work.</span>
         </label>
-        <input
-          ref={inputRef}
-          id={inputId}
-          type="file"
-          accept=".csv,.ofx,.qfx"
-          className="sr-only"
-          disabled={busy}
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void send(f);
-            e.target.value = "";
-          }}
-        />
       </div>
 
       <div aria-live="polite" role="status">
